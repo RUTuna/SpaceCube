@@ -17,6 +17,7 @@ class planes:
         c = n[2]
         d = -1*a*p0[0] -1*b*p0[1] -1*c*p0[2]
 
-        self.linEqu = np.array([a, b, c, d])
-        self.linEqu3D = np.array([a, b, c])
+        self.linEqu = np.array([a, b, c, d]) / np.linalg.norm(np.array([a, b, c]))
+        self.linEqu3D = np.array([a, b, c]) / np.linalg.norm(np.array([a, b, c]))
+        print(self.linEqu)
         self.index = index
