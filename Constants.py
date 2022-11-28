@@ -1,9 +1,10 @@
 BALL_RADIUS = 0.1
-TIME_DIFFERENCE = 0.01
+TIME_INTERVAL = 0.01
 GRAVITY_ASSELERATION = 5
 
 import numpy as np
 
+# plane class
 class planes:
     def __init__(self, p0, p1, p2, index):
         self.p0 = p0

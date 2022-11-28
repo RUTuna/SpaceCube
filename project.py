@@ -4,6 +4,9 @@ from OpenGL.GLUT import *
 import numpy as np
 import serial
 import sys
+import math 
+import Constants as const
+from Constants import planes # import plane class
 
 # Edit Log: 이승환, 221127 22:19
 # Edit Log: 
@@ -36,34 +39,19 @@ if sensor:
     ser.flushInput()
 
 # plane class
-class planes:
-    def __init__(self, p0, p1, p2, index):
-        # p0 p1 p2: Counter Clockwise coordinate due to orientation
-        self.p0 = p0
-        self.p1 = p1
-        self.p2 = p2
-        self.p3 = p2 + p0 - p1
-        n = np.cross(p1-p0, p2-p0)
-        a = n[0]
-        b = n[1]
-        c = n[2]
-        d = -1*a*p0[0] -1*b*p0[1] -1*c*p0[2]
 
-        self.linEqu = np.array([a, b, c, d])
-        self.linEqu3D = np.array([a, b, c])
-        self.index = index
 
 class Viewer:
     def __init__(self):
         self.Y = 0 # Yaw
         self.P = 0 # Pitch
         self.R = 0 # Roll
-        self.accG = 5 # gravity acceleration
+        self.accG = const.GRAVITY_ASSELERATION # gravity acceleration
         self.p = np.array([0, 0.3, 0]) # initial ball position
         self.v = np.array([0, 0, 0]) # initial ball velocity
         self.a = np.array([0, -1 * self.accG, 0]) # initial ball accerleration
-        self.dt = 0.01 # time interval
-        self.radius = 0.1 # ball radius
+        self.dt = const.TIME_INTERVAL # time interval
+        self.radius = const.BALL_RADIUS # ball radius
         self.damp = 0.9 # damping coefficient
         self.cameraPosition = np.array([10, 10, 10]) # position of camera 얼짱각도에 카메라 뒀음,,,
         self.cameraLook = np.array([0, 0, 0]) # looAt of camera
