@@ -240,7 +240,7 @@ class Viewer:
         # ball axis
         if not self.ballView:
             glPushMatrix()
-            glTranslatef(self.p[0],self.p[1],self.p[2])
+            glTranslatef(self.p[0],self.p[1],self.p[2]) # translate to ball position
             glMultMatrixf(self.rotateMatrix) # only rotate
 
             glLineWidth(3)
@@ -309,8 +309,6 @@ class Viewer:
             glEnd()
 
 
-     
-
         glutSwapBuffers()
 
     def keyboard(self, key, x, y):
@@ -325,27 +323,24 @@ class Viewer:
         if key == b'b': # on/off ballView
             self.ballView = not self.ballView
             print("Now view mode is" ,"Ball View" if self.ballView else "Cube View")
-            if self.ballView:
+
+            if self.ballView: # ball view 에서 기본 fov는 50
                 self.fov = 50
             else :
-                self.rotateMatrix = np.eye(4)
-                self.cop, self.at, self.up = const.INIT_COP, const.INIT_AT, const.INIT_UP
+                self.rotateMatrix = np.eye(4) # cube view에선 rotateMatrix를 누적시키지 않기에 초기화
+                self.cop, self.at, self.up = const.INIT_COP, const.INIT_AT, const.INIT_UP # camera 위치 초기화
                 self.fov = 0
+
+        if key == b'v': # on/off observerMode
+            self.observerMode = not self.observerMode            
+            print(f"Now observerMode is {self.observerMode}")
+            self.rotateMatrix = np.eye(4) # view 전환 시 rotateMatrix 초기화
+            if not self.observerMode and not self.ballView: # cube view 에서 observer mode 취소 시 
+                self.cop, self.at, self.up = const.INIT_COP, const.INIT_AT, const.INIT_UP # camera 위치 초기화
 
         if key == b'r': # reset ball position
             self.p, self.v, self.a = const.INIT_BALL_POSITION, const.INIT_BALL_VELOCITY, const.INIT_BALL_ACCERLATION
-        if key == b'v': # on/off observerMode
-            self.observerMode = not self.observerMode
-            self.rotateMatrix = np.eye(4)
-            if not self.observerMode :
-                if self.ballView:
-                    pass # 수정하자 지안아 !!!!
-                else:
-                    self.cop, self.at, self.up = const.INIT_COP, const.INIT_AT, const.INIT_UP
-
-            print(f"observerMode is {self.observerMode}")
             
-
         glutPostRedisplay()
 
     def special(self, key, x, y):
