@@ -1,6 +1,9 @@
+import numpy as np
+
+AXIS_LENGTH = 0.5
 BALL_RADIUS = 0.1
 TIME_INTERVAL = 0.01
-GRAVITY_ACCELERATION = 5
+GRAVITY_ACCELERATION = 5 # gravity acceleration
 COLLISION_DAMP = 0.6
 
 WINDOW_WIDTH = 800
@@ -8,7 +11,13 @@ WINDOW_HEIGHT = 800
 
 MAP_SCALE = 1/45 / 1 / 1.5
 
-import numpy as np
+INIT_BALL_POSITION = np.array([0, -0.9 / 1.5, 0]) # initial ball position
+INIT_BALL_VELOCITY = np.array([0, 0, 0]) # initial ball velocity
+INIT_BALL_ACCERLATION = np.array([0, -1 * GRAVITY_ACCELERATION, 0]) # initial ball accerleration
+
+INIT_COP = np.array([0, 0, 10])
+INIT_AT = np.array([0, 0, 0])
+INIT_UP = np.array([0, 1, 0])
 
 # plane class
 class planes:

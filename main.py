@@ -53,10 +53,7 @@ class Viewer:
         self.prevY = 0
         self.prevP = 0
         self.prevR = 0
-        self.accG = const.GRAVITY_ACCELERATION # gravity acceleration
-        self.p = np.array([0, -0.9 / 1.5, 0]) # initial ball position
-        self.v = np.array([0, 0, 0]) # initial ball velocity
-        self.a = np.array([0, -1 * self.accG, 0]) # initial ball accerleration
+        self.p, self.v, self.a = const.INIT_BALL_POSITION, const.INIT_BALL_VELOCITY, const.INIT_BALL_ACCERLATION
         self.dt = const.TIME_INTERVAL # time interval
         self.radius = const.BALL_RADIUS # ball radius
         self.damp = const.COLLISION_DAMP # damping coefficient
@@ -65,9 +62,7 @@ class Viewer:
         self.rotateMatrix = np.eye(4)
 
         # projectioin parameter
-        self.cop = np.array([0, 0, 10])  # position of camera 얼짱각도에 카메라 뒀음,,,
-        self.at = np.array([0, 0, 0]) # looAt of camera
-        self.up = np.array([0, 1, 0])  # up vector w.r.t. position vector
+        self.cop, self.at, self.up = const.INIT_COP, const.INIT_AT, const.INIT_UP
         self.fov = 0
 
         # window width, height 
@@ -241,28 +236,28 @@ class Viewer:
 
         glMatrixMode(GL_MODELVIEW)
 
-        glPushMatrix()
-        glTranslatef(self.p[0],self.p[1],self.p[2])
-        glMultMatrixf(self.rotateMatrix) # only rotate
+        # ball axis
+        if not self.ballView:
+            glPushMatrix()
+            glTranslatef(self.p[0],self.p[1],self.p[2])
+            glMultMatrixf(self.rotateMatrix) # only rotate
 
-        glLineWidth(3)
-        glBegin(GL_LINES)
-        glColor4f(0,0,1,1)
-        glVertex3f(0,0,0.5)
-        glVertex3f(0,0,0)
+            glLineWidth(3)
+            glBegin(GL_LINES)
+            glColor4f(0, 0, 1, 1)
+            glVertex3f(0, 0, const.AXIS_LENGTH)
+            glVertex3f(0, 0, 0)
 
-        glColor4f(0,1,0,1)
-        glVertex3f(0,0.5,0)
-        glVertex3f(0,0,0)
+            glColor4f(0, 1, 0, 1)
+            glVertex3f(0, const.AXIS_LENGTH, 0)
+            glVertex3f(0, 0, 0)
 
-        glColor4f(1,0,0,1)
-        glVertex3f(0.5,0,0)
-        glVertex3f(0,0,0)
-        glEnd()
+            glColor4f(1, 0, 0, 1)
+            glVertex3f(const.AXIS_LENGTH, 0, 0)
+            glVertex3f(0, 0, 0)
+            glEnd()
+            glPopMatrix()
         
-        glPopMatrix()
-        
-
         glLoadIdentity()
         
         glColor4f(1, 1, 1, 1)
@@ -330,20 +325,23 @@ class Viewer:
                 self.fov = 50
             else :
                 self.rotateMatrix = np.eye(4)
-                self.cop = np.array([0, 0, 10])  # position of camera 얼짱각도에 카메라 뒀음,,,
-                self.at = np.array([0, 0, 0]) # looAt of camera
-                self.up = np.array([0, 1, 0])  # up vector w.r.t. position vector
+                self.cop, self.at, self.up = const.INIT_COP, const.INIT_AT, const.INIT_UP
                 self.fov = 0
 
         if key == b'r': # reset ball position
-            self.p = np.array([0, 0.3, 0]) # initial ball position
-            self.v = np.array([0, 0, 0]) # initial ball velocity
-            self.a = np.array([0, -1 * self.accG, 0]) # initial ball accerleration
+            self.p, self.v, self.a = const.INIT_BALL_POSITION, const.INIT_BALL_VELOCITY, const.INIT_BALL_ACCERLATION
 
         if key == b'v': # on/off observerMode
             self.observerMode = not self.observerMode
             self.rotateMatrix = np.eye(4)
+            if not self.observerMode :
+                if self.ballView:
+                    pass # 수정하자 지안아 !!!!
+                else:
+                    self.cop, self.at, self.up = const.INIT_COP, const.INIT_AT, const.INIT_UP
+
             print(f"observerMode is {self.observerMode}")
+            
 
         glutPostRedisplay()
 
