@@ -140,11 +140,11 @@ class Viewer:
         return z
 
     
-    # angle mustbe radians
+    # input angle mustbe degree
     def angleRotate(self, xAngle, yAngle, zAngle):
-        xAngle = np.deg2rad(xAngle)
-        yAngle = np.deg2rad(yAngle)
-        zAngle = np.deg2rad(zAngle)
+        xAngle = math.radians(xAngle)
+        yAngle = math.radians(yAngle)
+        zAngle = math.radians(zAngle)
         cosx = math.cos(xAngle)
         sinx = math.sin(xAngle)
 
@@ -195,11 +195,7 @@ class Viewer:
             axis = axis / axisNorm
             angle = axisNorm / (np.linalg.norm(str) + np.linalg.norm(dst))
 
-        xAngle = math.radians(angle * axis[0])
-        yAngle = math.radians(angle * axis[1]) 
-        zAngle = math.radians(angle * axis[2]) 
-
-        self.angleRotate(xAngle, yAngle, zAngle)
+        self.angleRotate(angle * axis[0], angle * axis[1], angle * axis[2])
        
     def light(self):
         glEnable(GL_COLOR_MATERIAL)
@@ -244,6 +240,29 @@ class Viewer:
         glMultMatrixf(self.world2camera(self.cop, self.at, self.up))
 
         glMatrixMode(GL_MODELVIEW)
+
+        glPushMatrix()
+        glTranslatef(self.p[0],self.p[1],self.p[2])
+        glMultMatrixf(self.rotateMatrix) # only rotate
+
+        glLineWidth(3)
+        glBegin(GL_LINES)
+        glColor4f(0,0,1,1)
+        glVertex3f(0,0,0.5)
+        glVertex3f(0,0,0)
+
+        glColor4f(0,1,0,1)
+        glVertex3f(0,0.5,0)
+        glVertex3f(0,0,0)
+
+        glColor4f(1,0,0,1)
+        glVertex3f(0.5,0,0)
+        glVertex3f(0,0,0)
+        glEnd()
+        
+        glPopMatrix()
+        
+
         glLoadIdentity()
         
         glColor4f(1, 1, 1, 1)
@@ -263,11 +282,6 @@ class Viewer:
         # if gyroscope is available
         if sensor:
             self.angleRotate(-1 * self.R, -1 * self.Y, -1 * self.P)
-            # glRotatef(self.Y, 0, 1, 0)
-            # glRotatef(self.P, 0, 0, -1)
-            # glRotatef(self.R, 1, 0, 0)
-
-            # @박지안 여기에도 plane 회전 좀 넣어주세요
 
         # else :
         rot = np.delete(self.rotateMatrix, 3 , axis = 0)
@@ -294,7 +308,9 @@ class Viewer:
             glVertex3f(bound.p2[0], bound.p2[1], bound.p2[2])
             #glVertex3f(bound.p3[0], bound.p3[1], bound.p3[2])
             glEnd()
-        
+
+
+     
 
         glutSwapBuffers()
 
