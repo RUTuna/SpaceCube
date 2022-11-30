@@ -77,8 +77,8 @@ class Viewer:
         self.lastCollistion = -1
 
         # make map
-        f = open('map.txt', 'r')
-        raw = f.readlines()
+        f1 = open('map.txt', 'r')
+        raw = f1.readlines()
         raw = raw[0].split(']]')
         raw = raw[:-1]
         for index in range(len(raw)):
@@ -101,8 +101,9 @@ class Viewer:
             p2 = np.array([float(raw[i][0]) * const.MAP_SCALE, (float(raw[i][1])-45) * const.MAP_SCALE, float(raw[i][2]) * const.MAP_SCALE])
             p1 = np.array([float(raw[i][3]) * const.MAP_SCALE, (float(raw[i][4])-45) * const.MAP_SCALE, float(raw[i][5]) * const.MAP_SCALE])
             p0 = np.array([float(raw[i][6]) * const.MAP_SCALE, (float(raw[i][7])-45) * const.MAP_SCALE, float(raw[i][8]) * const.MAP_SCALE])
-            self.boundaries.append(planes(p0, p1, p2, i))
-        self.color = (np.random.randn(508, 3) + 1) / 2 # random color
+            self.boundaries.append(planes(p2, p1, p0, i))
+        
+        self.color = (np.random.randn(520, 3) + 1) / 2 # random color
             
             
     # Because of numpy cross, according to https://github.com/microsoft/pylance-release/issues/3277 
@@ -285,7 +286,7 @@ class Viewer:
         if self.observerMode: # observer mode 에선 camera 를 회전
             self.cop, self.at, self.up = rot @ self.cop, rot @ self.at, rot @ self.up
         else: # plane 자체를 회전
-            for i in range(508):
+            for i in range(520):
                 self.boundaries[i].p0 = rot @ self.boundaries[i].p0
                 self.boundaries[i].p1 = rot @ self.boundaries[i].p1
                 self.boundaries[i].p2 = rot @ self.boundaries[i].p2
@@ -297,7 +298,10 @@ class Viewer:
         for i, bound in enumerate(self.boundaries):
             #glBegin(GL_QUADS)
             glBegin(GL_TRIANGLES)
-            glColor4f(self.color[i, 0], self.color[i, 1], self.color[i, 2], 0.5)
+            if i < 508:
+                glColor4f(self.color[i, 0], self.color[i, 1], self.color[i, 2], 0.5)
+            else:
+                glColor4f(0, 0, 0, 1)
             glVertex3f(bound.p0[0], bound.p0[1], bound.p0[2])
             glVertex3f(bound.p1[0], bound.p1[1], bound.p1[2])
             glVertex3f(bound.p2[0], bound.p2[1], bound.p2[2])
@@ -330,7 +334,6 @@ class Viewer:
 
         if key == b'r': # reset ball position
             self.p, self.v, self.a = const.INIT_BALL_POSITION, const.INIT_BALL_VELOCITY, const.INIT_BALL_ACCERLATION
-
         if key == b'v': # on/off observerMode
             self.observerMode = not self.observerMode
             self.rotateMatrix = np.eye(4)

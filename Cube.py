@@ -37,16 +37,16 @@ def parse_obj(path):
     faces = temp
     print(len(faces))
     print(type(faces[0][0]))
-    print(faces[507])
+    print(faces[519])
     print(faces[0][0]-1)
     print(verts[1])
     print(verts[1][0])
     
-    faces_in_xyz = [[[0 for _ in range(3)] for _ in range(3)] for _ in range(508)]
+    faces_in_xyz = [[[0 for _ in range(3)] for _ in range(3)] for _ in range(520)]
     
     
     print(faces_in_xyz)
-    for i in range(0,508):
+    for i in range(0,520):
         face1_index = int(faces[i][0])-1
         face2_index = int(faces[i][1])-1
         face3_index = int(faces[i][2])-1
@@ -77,6 +77,7 @@ def parse_obj(path):
 
             
 # parse_obj('data/cube.obj')            
+parse_obj('data/cube_cover.obj')            
 
 # import numpy as np
 # f = open('map.txt', 'r')
