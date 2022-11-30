@@ -276,7 +276,7 @@ class Viewer:
         for i, bound in enumerate(self.boundaries):
             #glBegin(GL_QUADS)
             glBegin(GL_TRIANGLES)
-            glColor4f(self.color[i, 0], self.color[i, 1], self.color[i, 2], 0.5)
+            glColor4f(self.color[i, 0], self.color[i, 1], self.color[i, 2], 0.5+0.5)
             glVertex3f(bound.p0[0], bound.p0[1], bound.p0[2])
             glVertex3f(bound.p1[0], bound.p1[1], bound.p1[2])
             glVertex3f(bound.p2[0], bound.p2[1], bound.p2[2])
@@ -387,10 +387,13 @@ class Viewer:
             # alpha = np.linalg.norm(np.cross(pb, pc)) / (2*area)
             alpha = np.power(pb[1]*pc[2] - pb[2]*pc[1], 2) + np.power(pb[0] * pc[2] - pb[2] * pc[0], 2) + np.power(pb[0] * pc[1] - pb[1] * pc[0], 2)
             alpha = np.sqrt(alpha) / (2*area)
-
+            if alpha < 0:
+                continue
             # beta = np.linalg.norm(np.cross(pc, pa)) / (2*area)
             beta = np.power(pc[1]*pa[2] - pc[2]*pa[1], 2) + np.power(pc[0] * pa[2] - pc[2] * pa[0], 2) + np.power(pc[0] * pa[1] - pc[1] * pa[0], 2)
             beta = np.sqrt(beta) / (2*area)
+            if beta < 0:
+                continue
             gamma = 1 - alpha - beta
 
             
