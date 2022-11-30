@@ -50,6 +50,9 @@ class Viewer:
         self.Y = 0 # Yaw
         self.P = 0 # Pitch
         self.R = 0 # Roll
+        self.prevY = 0
+        self.prevP = 0
+        self.prevR = 0
         self.accG = const.GRAVITY_ACCELERATION # gravity acceleration
         self.p = np.array([0, -0.9 / 1.5, 0]) # initial ball position
         self.v = np.array([0, 0, 0]) # initial ball velocity
@@ -138,7 +141,10 @@ class Viewer:
 
     
     # angle mustbe radians
-    def angelRotate(self, xAngle, yAngle, zAngle):
+    def angleRotate(self, xAngle, yAngle, zAngle):
+        xAngle = np.deg2rad(xAngle)
+        yAngle = np.deg2rad(yAngle)
+        zAngle = np.deg2rad(zAngle)
         cosx = math.cos(xAngle)
         sinx = math.sin(xAngle)
 
@@ -153,12 +159,12 @@ class Viewer:
                             [0,     0,      1,  0], 
                             [0,     0,      0,  1]])
 
-        matriY = np.array([[cosy,   0,  siny,   0], 
+        matrixY = np.array([[cosy,   0,  siny,   0], 
                             [0,     1,  0,      0], 
                             [-siny, 0,  cosy,   0], 
                             [0,     0,  0,      1]])
 
-        matriZ = np.array([[1,  0,      0,      0], 
+        matrixZ = np.array([[1,  0,      0,      0], 
                             [0, cosx,   -sinx,  0], 
                             [0, sinx,   cosx,   0], 
                             [0, 0,      0,      1]])
@@ -166,9 +172,9 @@ class Viewer:
 
         # ballView 의 observerMode 에선 frame 마다 카메라를 공의 중심으로 옮기기에 변환 행렬을 누적시켜 적용시켜줘야 함
         if self.observerMode and self.ballView:
-            self.rotateMatrix =  self.rotateMatrix @ matrixX @ matriY @ matriZ 
+            self.rotateMatrix =  self.rotateMatrix @ matrixX @ matrixY @ matrixZ 
         else:
-            self.rotateMatrix =  matrixX @ matriY @ matriZ 
+            self.rotateMatrix =  matrixX @ matrixY @ matrixZ 
 
 
     # virtual trackball
@@ -193,7 +199,7 @@ class Viewer:
         yAngle = math.radians(angle * axis[1]) 
         zAngle = math.radians(angle * axis[2]) 
 
-        self.angelRotate(xAngle, yAngle, zAngle)
+        self.angleRotate(xAngle, yAngle, zAngle)
        
     def light(self):
         glEnable(GL_COLOR_MATERIAL)
@@ -256,7 +262,7 @@ class Viewer:
 
         # if gyroscope is available
         if sensor:
-            self.angelRotate(self.R, self.Y, self.P)
+            self.angleRotate(-1 * self.R, -1 * self.Y, -1 * self.P)
             # glRotatef(self.Y, 0, 1, 0)
             # glRotatef(self.P, 0, 0, -1)
             # glRotatef(self.R, 1, 0, 0)
@@ -282,7 +288,7 @@ class Viewer:
         for i, bound in enumerate(self.boundaries):
             #glBegin(GL_QUADS)
             glBegin(GL_TRIANGLES)
-            glColor4f(self.color[i, 0], self.color[i, 1], self.color[i, 2], 0.5+0.5)
+            glColor4f(self.color[i, 0], self.color[i, 1], self.color[i, 2], 0.5)
             glVertex3f(bound.p0[0], bound.p0[1], bound.p0[2])
             glVertex3f(bound.p1[0], bound.p1[1], bound.p1[2])
             glVertex3f(bound.p2[0], bound.p2[1], bound.p2[2])
@@ -452,10 +458,14 @@ class Viewer:
                 Y = int(float(inp[1]))
                 P = int(float(inp[2]))
                 R = int(float(inp[3]))
-                print(Y, P, R)
-                self.Y = Y
-                self.P = P
-                self.R = R
+                #print(Y, P, R)
+                self.Y = Y - self.prevY
+                self.P = P - self.prevP
+                self.R = R - self.prevR
+                self.prevY = Y
+                self.prevP = P
+                self.prevR = R
+                
         glutTimerFunc(int(self.dt * 1000), self.timer, 0)
         
         glutPostRedisplay()
