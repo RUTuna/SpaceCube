@@ -136,28 +136,9 @@ class Viewer:
 
         return z
 
-    # virtual trackball
-    def trackball(self, str, dst):
-        # transfrom coordinate(2D plane to 3D trackball), center is (0,0) and y-axis is filp
-        str = np.array([str[0] - (self.width/2), (self.height/2) - str[1], 0])/10
-        dst = np.array([dst[0] - (self.width/2), (self.height/2) - dst[1], 0])/10
-        
-        str[2] = self.transPos(str[0], str[1])
-        dst[2] = self.transPos(dst[0], dst[1])
-
-        # calculate rotation angle and axis
-        axis = self.cross(str, dst)
-        axisNorm = np.linalg.norm(axis)
-        if axisNorm == 0 :
-            angle = 0
-        else :
-            axis = axis / axisNorm
-            angle = axisNorm / (np.linalg.norm(str) + np.linalg.norm(dst))
-
-        xAngle = math.radians(angle * axis[0])
-        yAngle = math.radians(angle * axis[1]) 
-        zAngle = math.radians(angle * axis[2]) 
-
+    
+    # angle mustbe radians
+    def angelRotate(self, xAngle, yAngle, zAngle):
         cosx = math.cos(xAngle)
         sinx = math.sin(xAngle)
 
@@ -183,12 +164,36 @@ class Viewer:
                             [0, 0,      0,      1]])
 
 
-
         # ballView 의 observerMode 에선 frame 마다 카메라를 공의 중심으로 옮기기에 변환 행렬을 누적시켜 적용시켜줘야 함
         if self.observerMode and self.ballView:
             self.rotateMatrix =  self.rotateMatrix @ matrixX @ matriY @ matriZ 
         else:
             self.rotateMatrix =  matrixX @ matriY @ matriZ 
+
+
+    # virtual trackball
+    def trackball(self, str, dst):
+        # transfrom coordinate(2D plane to 3D trackball), center is (0,0) and y-axis is filp
+        str = np.array([str[0] - (self.width/2), (self.height/2) - str[1], 0])/10
+        dst = np.array([dst[0] - (self.width/2), (self.height/2) - dst[1], 0])/10
+        
+        str[2] = self.transPos(str[0], str[1])
+        dst[2] = self.transPos(dst[0], dst[1])
+
+        # calculate rotation angle and axis
+        axis = self.cross(str, dst)
+        axisNorm = np.linalg.norm(axis)
+        if axisNorm == 0 :
+            angle = 0
+        else :
+            axis = axis / axisNorm
+            angle = axisNorm / (np.linalg.norm(str) + np.linalg.norm(dst))
+
+        xAngle = math.radians(angle * axis[0])
+        yAngle = math.radians(angle * axis[1]) 
+        zAngle = math.radians(angle * axis[2]) 
+
+        self.angelRotate(xAngle, yAngle, zAngle)
        
     def light(self):
         glEnable(GL_COLOR_MATERIAL)
@@ -251,26 +256,27 @@ class Viewer:
 
         # if gyroscope is available
         if sensor:
-            glRotatef(self.Y, 0, 1, 0)
-            glRotatef(self.P, 0, 0, -1)
-            glRotatef(self.R, 1, 0, 0)
+            self.angelRotate(self.R, self.Y, self.P)
+            # glRotatef(self.Y, 0, 1, 0)
+            # glRotatef(self.P, 0, 0, -1)
+            # glRotatef(self.R, 1, 0, 0)
 
             # @박지안 여기에도 plane 회전 좀 넣어주세요
 
-        else :
-            rot = np.delete(self.rotateMatrix, 3 , axis = 0)
-            rot = np.delete(rot, 3 , axis = 1)
+        # else :
+        rot = np.delete(self.rotateMatrix, 3 , axis = 0)
+        rot = np.delete(rot, 3 , axis = 1)
 
-            if self.observerMode: # observer mode 에선 camera 를 회전
-                self.cop, self.at, self.up = rot @ self.cop, rot @ self.at, rot @ self.up
-            else: # plane 자체를 회전
-                for i in range(508):
-                    self.boundaries[i].p0 = rot @ self.boundaries[i].p0
-                    self.boundaries[i].p1 = rot @ self.boundaries[i].p1
-                    self.boundaries[i].p2 = rot @ self.boundaries[i].p2
-                    #self.boundaries[i].p3 = rot @ self.boundaries[i].p3
-                    self.boundaries[i].linEqu3D = rot @ self.boundaries[i].linEqu3D
-                    self.boundaries[i].linEqu[0:3] = self.boundaries[i].linEqu3D
+        if self.observerMode: # observer mode 에선 camera 를 회전
+            self.cop, self.at, self.up = rot @ self.cop, rot @ self.at, rot @ self.up
+        else: # plane 자체를 회전
+            for i in range(508):
+                self.boundaries[i].p0 = rot @ self.boundaries[i].p0
+                self.boundaries[i].p1 = rot @ self.boundaries[i].p1
+                self.boundaries[i].p2 = rot @ self.boundaries[i].p2
+                #self.boundaries[i].p3 = rot @ self.boundaries[i].p3
+                self.boundaries[i].linEqu3D = rot @ self.boundaries[i].linEqu3D
+                self.boundaries[i].linEqu[0:3] = self.boundaries[i].linEqu3D
         
         # map drawing
         for i, bound in enumerate(self.boundaries):
