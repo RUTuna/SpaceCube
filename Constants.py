@@ -1,17 +1,17 @@
 import numpy as np
 
 AXIS_LENGTH = 0.5
-BALL_RADIUS = 0.05
+BALL_RADIUS = 0.04
 TIME_INTERVAL = 0.01
 GRAVITY_ACCELERATION = 5 # gravity acceleration
-COLLISION_DAMP = 0.6
+COLLISION_DAMP = 0.5
 
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 800
 
 MAP_SCALE = 1/45 / 1 / 1.5
 
-INIT_BALL_POSITION = np.array([0, 0.2/1.5, 0.8]) # initial ball position
+INIT_BALL_POSITION = np.array([0, 0.2/1.5, 0.5]) # initial ball position
 INIT_BALL_VELOCITY = np.array([0, 0, 0]) # initial ball velocity
 INIT_BALL_ACCERLATION = np.array([0, -1 * GRAVITY_ACCELERATION, 0]) # initial ball accerleration
 

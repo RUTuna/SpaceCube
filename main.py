@@ -9,10 +9,6 @@ import math
 import Constants as const
 from Constants import planes # import plane class
 
-# Edit Log: 이승환, 221127 22:19
-# Edit Log: 박지안, git log 확인
-# Edit Log: 이승환, 221129 21:30
-
 # r : reset ball position
 # v : on/off observer mode (default is False)
 # b : on/off ball view mode (default is False)
@@ -103,7 +99,13 @@ class Viewer:
             p0 = np.array([float(raw[i][6]) * const.MAP_SCALE, (float(raw[i][7])-45) * const.MAP_SCALE, float(raw[i][8]) * const.MAP_SCALE])
             self.boundaries.append(planes(p2, p1, p0, i))
         
-        self.color = (np.random.randn(520, 3) + 1) / 2 # random color
+        f2 = open('orientation.txt', 'r')
+        for index in range(532):
+            raw = f2.readline()
+            orientation = int(raw)
+            self.boundaries[index].linEqu = self.boundaries[index].linEqu * orientation
+            self.boundaries[index].linEqu3D = self.boundaries[index].linEqu3D * orientation
+        self.color = (np.random.randn(532, 3) + 1) / 2 # random color
             
             
     # Because of numpy cross, according to https://github.com/microsoft/pylance-release/issues/3277 
@@ -170,8 +172,7 @@ class Viewer:
         if self.observerMode and self.ballView:
             self.rotateMatrix =  self.rotateMatrix @ matrixX @ matrixY @ matrixZ 
         else:
-            self.rotateMatrix =  matrixX @ matrixY @ matrixZ 
-
+            self.rotateMatrix =  matrixX @ matrixY @ matrixZ
 
     # virtual trackball
     def trackball(self, str, dst):
@@ -277,37 +278,34 @@ class Viewer:
 
         # if gyroscope is available
         if sensor:
-            self.angleRotate(-1 * self.R, -1 * self.Y, -1 * self.P)
+            self.angleRotate(-1 * self.R, 1 * self.Y, 1 * self.P)
 
-        # else :
         rot = np.delete(self.rotateMatrix, 3 , axis = 0)
         rot = np.delete(rot, 3 , axis = 1)
 
         if self.observerMode: # observer mode 에선 camera 를 회전
             self.cop, self.at, self.up = rot @ self.cop, rot @ self.at, rot @ self.up
         else: # plane 자체를 회전
-            for i in range(520):
+            for i in range(532):
                 self.boundaries[i].p0 = rot @ self.boundaries[i].p0
                 self.boundaries[i].p1 = rot @ self.boundaries[i].p1
                 self.boundaries[i].p2 = rot @ self.boundaries[i].p2
-                #self.boundaries[i].p3 = rot @ self.boundaries[i].p3
                 self.boundaries[i].linEqu3D = rot @ self.boundaries[i].linEqu3D
                 self.boundaries[i].linEqu[0:3] = self.boundaries[i].linEqu3D
-        
+            self.p = rot @ self.p
+            self.v = rot @ self.v
+            
         # map drawing
         for i, bound in enumerate(self.boundaries):
-            #glBegin(GL_QUADS)
             glBegin(GL_TRIANGLES)
             if i < 508:
-                glColor4f(self.color[i, 0], self.color[i, 1], self.color[i, 2], 0.5)
+                glColor4f(self.color[i, 0], self.color[i, 1], self.color[i, 2], 1)
             else:
-                glColor4f(0, 0, 0, 1)
+                glColor4f(1, 1, 1, 0)
             glVertex3f(bound.p0[0], bound.p0[1], bound.p0[2])
             glVertex3f(bound.p1[0], bound.p1[1], bound.p1[2])
             glVertex3f(bound.p2[0], bound.p2[1], bound.p2[2])
-            #glVertex3f(bound.p3[0], bound.p3[1], bound.p3[2])
             glEnd()
-
 
         glutSwapBuffers()
 
@@ -391,7 +389,7 @@ class Viewer:
         # update velocity, position
         self.v = self.v + self.a * self.dt
         self.p = self.p + self.v * self.dt
-        print(self.p)
+        # print(self.p)
 
         # list of collisions
         collisionIndex = []
@@ -418,17 +416,11 @@ class Viewer:
             beta = np.sqrt(beta) / (2*area)
             if beta < 0:
                 continue
-            gamma = 1 - alpha - beta
+            #gamma = 1 - alpha - beta
+            gamma = np.power(pa[1]*pb[2] - pa[2]*pb[1], 2) + np.power(pa[0] * pb[2] - pa[2] * pb[0], 2) + np.power(pa[0] * pb[1] - pa[1] * pb[0], 2)
+            gamma = np.sqrt(gamma) / (2*area)
 
-            
-            # Mx = max(bound.p0[0], bound.p1[0], bound.p2[0])#, bound.p3[0])
-            # mx = min(bound.p0[0], bound.p1[0], bound.p2[0])#, bound.p3[0])
-            # My = max(bound.p0[1], bound.p1[1], bound.p2[1])#, bound.p3[1])
-            # my = min(bound.p0[1], bound.p1[1], bound.p2[1])#, bound.p3[1])
-            # Mz = max(bound.p0[2], bound.p1[2], bound.p2[2])#, bound.p3[2])
-            # mz = min(bound.p0[2], bound.p1[2], bound.p2[2])#, bound.p3[2])
-            # inner = (estimatedPP[0] <= Mx) and (estimatedPP[0] >= mx) and (estimatedPP[1] <= My) and (estimatedPP[1] >= my) and (estimatedPP[2] <= Mz) and (estimatedPP[2] >= mz)
-            inner = alpha >=0 and beta >=0 and gamma >=0
+            inner = alpha >=0 and beta >=0 and gamma >=0 and abs(alpha+beta+gamma - 1) < 0.2
 
             # 충돌 및 plane내부에 충돌하는 두가지 모두 만족할 경우
             isCollision = (d <= self.radius) and inner
@@ -454,8 +446,12 @@ class Viewer:
             
             linEqu = normalAverage / len(collisionIndex) # 모든 충돌에 대해 반사각 평균 계산
             linEqu3D = linEqu[0:3]
+            
 
-            vn = (self.v @ linEqu3D.T) / (linEqu3D @ linEqu3D.T) * linEqu3D # 충돌 방정식
+            if linEqu3D @ linEqu3D.T == 0:
+                vn = (self.v @ linEqu3D.T) / (np.finfo(float).eps) * linEqu3D # 충돌 방정식
+            else :
+                vn = (self.v @ linEqu3D.T) / (linEqu3D @ linEqu3D.T) * linEqu3D # 충돌 방정식
             vt = self.v - vn
             self.v = vt - self.damp * vn
         
@@ -464,13 +460,22 @@ class Viewer:
             ser.flushInput()
             inp = ser.readline()
             inp = inp.decode().split('\t')
-            if len(inp) != 4:
+            if len(inp) != 5:
                 pass
             else:
-                Y = int(float(inp[1]))
-                P = int(float(inp[2]))
-                R = int(float(inp[3]))
-                #print(Y, P, R)
+                
+                w = (float(inp[1]))
+                x = (float(inp[2]))
+                y = (float(inp[3]))
+                z = (float(inp[4]))
+                
+                P = np.arctan2(2*y*w - 2*x*z, 1 - 2*y*y - 2*z*z) / np.pi * 180
+                R = np.arctan2(2*x*w - 2*y*z, 1 - 2*x*x - 2*z*z) / np.pi * 180
+                Y = np.arcsin(2*x*y + 2*z*w) / np.pi * 180
+                print(Y, P, R)
+                # Y = int(float(inp[1]))
+                # P = int(float(inp[2]))
+                # R = int(float(inp[3]))
                 self.Y = Y - self.prevY
                 self.P = P - self.prevP
                 self.R = R - self.prevR

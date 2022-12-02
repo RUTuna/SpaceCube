@@ -1,3 +1,4 @@
+num = 532
 def parse_obj(path):
     with open(path, 'r') as file:
         raw = file.readlines()
@@ -37,16 +38,16 @@ def parse_obj(path):
     faces = temp
     print(len(faces))
     print(type(faces[0][0]))
-    print(faces[519])
+    print(faces[num-1])
     print(faces[0][0]-1)
     print(verts[1])
     print(verts[1][0])
     
-    faces_in_xyz = [[[0 for _ in range(3)] for _ in range(3)] for _ in range(520)]
+    faces_in_xyz = [[[0 for _ in range(3)] for _ in range(3)] for _ in range(num)]
     
     
     print(faces_in_xyz)
-    for i in range(0,520):
+    for i in range(0,num):
         face1_index = int(faces[i][0])-1
         face2_index = int(faces[i][1])-1
         face3_index = int(faces[i][2])-1
@@ -77,7 +78,8 @@ def parse_obj(path):
 
             
 # parse_obj('data/cube.obj')            
-parse_obj('data/cube_cover.obj')            
+# parse_obj('data/cube_cover.obj')            
+parse_obj('data/cube_hole.obj')    
 
 # import numpy as np
 # f = open('map.txt', 'r')
