@@ -38,7 +38,7 @@ if sensor:
     if isWindows:
         ser = serial.Serial('COM3', 115200) # Windows
     else:
-        ser = serial.Serial('/dev/tty.usbserial-210', 115200) # Linux, MAC ls /dev
+        ser = serial.Serial('/dev/tty.usbserial-2140', 115200) # Linux, MAC ls /dev
     ser.flushInput()
 
 class Viewer:
@@ -105,7 +105,7 @@ class Viewer:
             orientation = int(raw)
             self.boundaries[index].linEqu = self.boundaries[index].linEqu * orientation
             self.boundaries[index].linEqu3D = self.boundaries[index].linEqu3D * orientation
-        self.color = (np.random.randn(532, 3) + 1) / 2 # random color
+        self.color = (np.random.rand(532)) / 2  # random color
             
             
     # Because of numpy cross, according to https://github.com/microsoft/pylance-release/issues/3277 
@@ -213,6 +213,7 @@ class Viewer:
     def display(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glEnable(GL_BLEND)
+        # glCullFace(GL_FRONT_AND_BACK)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         glColor4f(1, 1, 1, 1)
@@ -227,12 +228,12 @@ class Viewer:
             factor = 1/min(right, top)
             right = right * factor
             top = top * factor
-            glOrtho(-right, right, -top, top, 0.1, 300)
+            glOrtho(-right, right, -top, top, 0.1, 100)
         else:
             top = 0.1 * math.tan(math.radians(self.fov/2));  
             top = top * max(800/self.width, 800/self.height)
             right = (self.width/self.height) * top
-            glFrustum(-right, right, -top, top, 0.1, 300)
+            glFrustum(-right, right, -top, top, 0.1, 100)
 
         glMultMatrixf(self.world2camera(self.cop, self.at, self.up))
 
@@ -273,12 +274,12 @@ class Viewer:
         # in ball view
         if self.ballView: 
             self.cop = self.p # camera를 ball 의 중심에
-            self.at = self.p + (self.boundaries[self.lastCollistion].p0 - self.boundaries[self.lastCollistion].p1)*10 # camera는 lastCollistion 의 평면 벡터와 평행한 방향을 바라보도록
+            self.at = self.p + (self.boundaries[self.lastCollistion].p0 - self.boundaries[self.lastCollistion].p1) * 20 # camera는 lastCollistion 의 평면 벡터와 평행한 방향을 바라보도록
             self.up = -self.a # 중력의 반대 방향을 up 방향으로
 
         # if gyroscope is available
         if sensor:
-            self.angleRotate(-1 * self.R, 1 * self.Y, 1 * self.P)
+            self.angleRotate(-0.5 * self.R, 0.5 * self.Y, 0.5 * self.P)
 
         rot = np.delete(self.rotateMatrix, 3 , axis = 0)
         rot = np.delete(rot, 3 , axis = 1)
@@ -299,7 +300,8 @@ class Viewer:
         for i, bound in enumerate(self.boundaries):
             glBegin(GL_TRIANGLES)
             if i < 508:
-                glColor4f(self.color[i, 0], self.color[i, 1], self.color[i, 2], 1)
+                c = self.color[i]
+                glColor4f(c, c, c, 1)
             else:
                 glColor4f(1, 1, 1, 0)
             glVertex3f(bound.p0[0], bound.p0[1], bound.p0[2])
@@ -463,7 +465,6 @@ class Viewer:
             if len(inp) != 5:
                 pass
             else:
-                
                 w = (float(inp[1]))
                 x = (float(inp[2]))
                 y = (float(inp[3]))
@@ -472,7 +473,6 @@ class Viewer:
                 P = np.arctan2(2*y*w - 2*x*z, 1 - 2*y*y - 2*z*z) / np.pi * 180
                 R = np.arctan2(2*x*w - 2*y*z, 1 - 2*x*x - 2*z*z) / np.pi * 180
                 Y = np.arcsin(2*x*y + 2*z*w) / np.pi * 180
-                print(Y, P, R)
                 # Y = int(float(inp[1]))
                 # P = int(float(inp[2]))
                 # R = int(float(inp[3]))
@@ -483,7 +483,7 @@ class Viewer:
                 self.prevP = P
                 self.prevR = R
                 
-        glutTimerFunc(int(self.dt * 1000), self.timer, 0)
+        glutTimerFunc(int(self.dt * 100), self.timer, 0)
         
         glutPostRedisplay()
 
@@ -500,7 +500,7 @@ class Viewer:
         glutMouseFunc(self.mouse)
         glutMotionFunc(self.motion)
         glutReshapeFunc(self.reshape)
-        glutTimerFunc(int(self.dt * 1000), self.timer, 0)
+        glutTimerFunc(int(self.dt * 100), self.timer, 0)
 
         self.light()
 
