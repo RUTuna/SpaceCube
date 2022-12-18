@@ -140,9 +140,9 @@ class Viewer:
     
     # input angle mustbe degree
     def angleRotate(self, xAngle, yAngle, zAngle):
-        if self.observerMode: # obseverve mode 에선 human view 과 회전각 반대로 적용됨
+        if self.observerMode: # obseverve rotation 에선 cube rotation 과 회전각 반대로 적용됨
             xAngle, zAngle = -xAngle, -zAngle
-            if not self.ballView: # ballview에선 at을 돌리는 것이기에 yAngle 반대로 (그렇기에 human view에서 회전각 반대로 돌림)
+            if not self.ballView: # ball view에선 at을 돌리는 것이기에 yAngle 반대로 (그렇기에 human view에서 회전각 반대)
                 yAngle = -yAngle
         xAngle = math.radians(xAngle)
         yAngle = math.radians(yAngle)
