@@ -118,13 +118,13 @@ class Viewer:
         x = self.cross(up, z)
         x = x / np.linalg.norm(x)
         y = self.cross(z, x)
+        
+        sceneMatrix = np.eye(4)
+        RT = np.array([x,y,z])
+        sceneMatrix[0:3, 0:3] = RT
+        sceneMatrix[0:3, 3] = -1 * RT @ cop.T
 
-        rc = [-np.dot(cop, x), -np.dot(cop, y), -np.dot(cop, z), 1]
-        x = np.append(x,0)
-        y = np.append(y,0)
-        z = np.append(z,0)
-
-        return np.array([x,y,z,rc])
+        return sceneMatrix.T
 
 
     # transform 2D plane to 3D trackball
@@ -140,6 +140,10 @@ class Viewer:
     
     # input angle mustbe degree
     def angleRotate(self, xAngle, yAngle, zAngle):
+        if self.observerMode: # obseverve mode 에선 cube view 과 회전각 반대로 적용됨
+            xAngle, zAngle = -xAngle, -zAngle
+            if not self.ballView: # ballview에선 at을 돌리는 것이기에 yAngle 반대로 (그렇기에 cube view에서 회전각 반대로 돌림)
+                yAngle = -yAngle
         xAngle = math.radians(xAngle)
         yAngle = math.radians(yAngle)
         zAngle = math.radians(zAngle)
@@ -168,8 +172,8 @@ class Viewer:
                             [0, 0,      0,      1]])
 
 
-        # ballView 의 observerMode 에선 frame 마다 카메라를 공의 중심으로 옮기기에 변환 행렬을 누적시켜 적용시켜줘야 함
-        if self.observerMode and self.ballView:
+        # observerMode 에선 frame 마다 카메라를 공의 중심으로 옮기기에 변환 행렬을 누적시켜 적용시켜줘야 함
+        if self.observerMode :
             self.rotateMatrix =  self.rotateMatrix @ matrixX @ matrixY @ matrixZ 
         else:
             self.rotateMatrix =  matrixX @ matrixY @ matrixZ
@@ -235,9 +239,21 @@ class Viewer:
             right = (self.width/self.height) * top
             glFrustum(-right, right, -top, top, 0.1, 100)
 
-        glMultMatrixf(self.world2camera(self.cop, self.at, self.up))
-
         glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+        rot = np.delete(self.rotateMatrix, 3 , axis = 0)
+        rot = np.delete(rot, 3 , axis = 1)
+        cop = self.cop
+        at = self.at
+        up = self.up
+
+        if self.observerMode: # observer mode 에선 camera 를 회전
+            at = rot @ at
+            up = rot @ up
+            if not self.ballView: # ball view 에선 camera 위치는 ball 위치로 고정이기에, ball view 가 아닐 때만 cop 회전
+                cop = rot @ cop
+            
+        glMultMatrixf(self.world2camera(cop, at, up))
 
         # ball axis
         if not self.ballView:
@@ -261,8 +277,6 @@ class Viewer:
             glEnd()
             glPopMatrix()
         
-        glLoadIdentity()
-        
         glColor4f(1, 1, 1, 1)
         glTranslatef(self.p[0], self.p[1], self.p[2]) # translation of ball
 
@@ -281,12 +295,7 @@ class Viewer:
         if sensor:
             self.angleRotate(-0.5 * self.R, 0.5 * self.Y, 0.5 * self.P)
 
-        rot = np.delete(self.rotateMatrix, 3 , axis = 0)
-        rot = np.delete(rot, 3 , axis = 1)
-
-        if self.observerMode: # observer mode 에선 camera 를 회전
-            self.cop, self.at, self.up = rot @ self.cop, rot @ self.at, rot @ self.up
-        else: # plane 자체를 회전
+        if not self.observerMode: # obsevation 모드가 아닐 땐 plane과 ball 자체를 회전
             for i in range(532):
                 self.boundaries[i].p0 = rot @ self.boundaries[i].p0
                 self.boundaries[i].p1 = rot @ self.boundaries[i].p1
@@ -365,7 +374,7 @@ class Viewer:
             self.yStart = y
         elif state == GLUT_UP:
             self.click = False
-            if not self.observerMode or not self.ballView:
+            if not self.observerMode :
                 self.rotateMatrix = np.eye(4)
             
         glutPostRedisplay()
