@@ -129,7 +129,7 @@ class Viewer:
 
     # transform 2D plane to 3D trackball
     def transPos(self, x, y):
-        radius = min([self.width, self.height])/2
+        radius = min([self.width, self.height])/2 # use min value between window's width and height
         z = 0
         d = pow(radius,2) - pow(x,2) - pow(y, 2)
         if d > 0:
@@ -140,9 +140,9 @@ class Viewer:
     
     # input angle mustbe degree
     def angleRotate(self, xAngle, yAngle, zAngle):
-        if self.observerMode: # obseverve mode 에선 cube view 과 회전각 반대로 적용됨
+        if self.observerMode: # obseverve mode 에선 human view 과 회전각 반대로 적용됨
             xAngle, zAngle = -xAngle, -zAngle
-            if not self.ballView: # ballview에선 at을 돌리는 것이기에 yAngle 반대로 (그렇기에 cube view에서 회전각 반대로 돌림)
+            if not self.ballView: # ballview에선 at을 돌리는 것이기에 yAngle 반대로 (그렇기에 human view에서 회전각 반대로 돌림)
                 yAngle = -yAngle
         xAngle = math.radians(xAngle)
         yAngle = math.radians(yAngle)
@@ -172,7 +172,7 @@ class Viewer:
                             [0, 0,      0,      1]])
 
 
-        # observerMode 에선 frame 마다 카메라를 공의 중심으로 옮기기에 변환 행렬을 누적시켜 적용시켜줘야 함
+        # observerMode 에선 cop, at, up에 값을 누적시키지 않으므로 변환 행렬을 누적시켜 적용시켜줘야 함
         if self.observerMode :
             self.rotateMatrix =  self.rotateMatrix @ matrixX @ matrixY @ matrixZ 
         else:
@@ -217,7 +217,6 @@ class Viewer:
     def display(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glEnable(GL_BLEND)
-        # glCullFace(GL_FRONT_AND_BACK)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         glColor4f(1, 1, 1, 1)
@@ -225,7 +224,6 @@ class Viewer:
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
         # projection matrix
-        # use glOrtho and glFrustum (or gluPerspective) here
         if self.fov < 5 : # orhogonal
             top = self.height/800
             right = self.width/800
@@ -233,7 +231,7 @@ class Viewer:
             right = right * factor
             top = top * factor
             glOrtho(-right, right, -top, top, 0.1, 100)
-        else:
+        else: # perspective
             top = 0.1 * math.tan(math.radians(self.fov/2));  
             top = top * max(800/self.width, 800/self.height)
             right = (self.width/self.height) * top
@@ -242,7 +240,7 @@ class Viewer:
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
         rot = np.delete(self.rotateMatrix, 3 , axis = 0)
-        rot = np.delete(rot, 3 , axis = 1)
+        rot = np.delete(rot, 3 , axis = 1) # 4x4 -> 3x3
         cop = self.cop
         at = self.at
         up = self.up
@@ -280,7 +278,7 @@ class Viewer:
         glColor4f(1, 1, 1, 1)
         glTranslatef(self.p[0], self.p[1], self.p[2]) # translation of ball
 
-        if not self.ballView: # cube view 에서만 ball 나타냄
+        if not self.ballView: # human view 에서만 ball 나타냄
             glutSolidSphere(self.radius, 50, 50)
 
         glTranslatef(-1 * self.p[0], -1 * self.p[1], -1 * self.p[2]) # undo translation for map
@@ -329,22 +327,21 @@ class Viewer:
         if glutGetModifiers() & GLUT_ACTIVE_CTRL:
             print("ctrl pressed")
 
-        if key == b'b': # on/off ballView
+        if key == b'b': # on/off ball View
             self.ballView = not self.ballView
-            print("Now view mode is" ,"Ball View" if self.ballView else "Cube View")
+            print("Now view mode is" ,"Ball View" if self.ballView else "Human View")
 
             if self.ballView: # ball view 에서 기본 fov는 50
                 self.fov = 50
             else :
-                self.rotateMatrix = np.eye(4) # cube view에선 rotateMatrix를 누적시키지 않기에 초기화
                 self.cop, self.at, self.up = const.INIT_COP, const.INIT_AT, const.INIT_UP # camera 위치 초기화
                 self.fov = 0
 
-        if key == b'v': # on/off observerMode
+        if key == b'v': # on/off observer Mode
             self.observerMode = not self.observerMode            
-            print(f"Now observerMode is {self.observerMode}")
+            print(f"Now observer Mode is {self.observerMode}")
             self.rotateMatrix = np.eye(4) # view 전환 시 rotateMatrix 초기화
-            if not self.observerMode and not self.ballView: # cube view 에서 observer mode 취소 시 
+            if not self.observerMode and not self.ballView: # human view 에서 observer mode 취소 시 
                 self.cop, self.at, self.up = const.INIT_COP, const.INIT_AT, const.INIT_UP # camera 위치 초기화
 
         if key == b'r': # reset ball position
